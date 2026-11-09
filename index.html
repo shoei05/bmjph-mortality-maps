@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>死因別死亡の地図</title>
+<meta name="description" content="Koda M, et al. BMJ Public Health 2026;4:e004913 の補足図S1〜S35を、死因・性別・指標を選んで見られる地図にしました。">
+<link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+<header class="top">
+  <div class="title">
+    <h1 data-t="title">死因別死亡の地図</h1>
+    <p class="sub" data-t="sub">BMJ Public Health 2026 補足図S1〜S35</p>
+  </div>
+  <button type="button" id="lang" class="lang" aria-label="Switch language">EN</button>
+</header>
+
+<main class="layout">
+  <aside class="panel" aria-label="設定">
+    <label class="field"><span data-t="cause">死因</span>
+      <select id="cause"></select>
+    </label>
+    <div class="field" role="group" aria-labelledby="sexLabel"><span id="sexLabel" data-t="sex">性別</span>
+      <div class="seg" id="sex"></div>
+    </div>
+    <div class="field" role="group" aria-labelledby="metricLabel"><span id="metricLabel" data-t="metric">指標</span>
+      <div class="seg seg-v" id="metric"></div>
+    </div>
+    <p class="explain" id="explain"></p>
+    <label class="field"><span data-t="search">市区町村を探す</span>
+      <input id="search" list="munis" autocomplete="off">
+      <datalist id="munis"></datalist>
+    </label>
+    <div class="nav">
+      <button type="button" id="prev" data-t="prev">← 前の死因</button>
+      <button type="button" id="next" data-t="next">次の死因 →</button>
+    </div>
+  </aside>
+
+  <section class="mapwrap">
+    <h2 id="heading"></h2>
+    <div id="map" class="map" aria-live="polite"></div>
+    <div id="tip" class="tip" hidden></div>
+    <div id="legend" class="legend"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p id="note"></p>
+  <p data-t="cite">出典：Koda M, Harada N, Nomura S, Tsugawa Y. Association of municipal rurality and area deprivation with cause-specific mortality in Japan: a nationwide ecological study. BMJ Public Health 2026;4:e004913. <a href="https://doi.org/10.1136/bmjph-2026-004913">doi:10.1136/bmjph-2026-004913</a></p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="app.js?v=5"></script>
+</body>
+</html>
