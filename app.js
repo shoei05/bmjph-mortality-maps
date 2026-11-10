@@ -20,7 +20,7 @@
         rij: '標準化死亡比のうち、へき地度との直線的な関係では説明できない部分です。1より大きいと、へき地度から見込まれるより死亡が多い地域です。',
         bym2: '論文の主モデル（へき地度とADIを入れたBYM2空間モデル）で説明しきれなかった市区町村ごとの効果です。1より大きいと、モデルの見込みより死亡が多い地域です。',
       },
-      fig: 'S', na: 'データなし', below: '未満', above: '以上', zoom: 'ホイールやピンチで拡大、ドラッグで移動、ダブルクリックで戻ります。',
+      fig: 'S', na: 'データなし', below: '未満', above: '以上', toLight: 'ライト', toDark: 'ダーク', themeAria: (d) => d ? 'ライト表示に切り替え' : 'ダーク表示に切り替え', zoom: 'ホイールやピンチで拡大、ドラッグで移動、ダブルクリックで戻ります。',
       note: '値は補足図と同じ色の範囲を12段階に区切った区分で示しています（正確な数値は載せていません）。色の範囲は補足図と同じく、すべての死因と性別をまとめた分布の3〜97%（標準化死亡比）または4〜96%（残差）です。北海道と沖縄県は位置をずらして表示しています。市区町村単位の生態学的研究で、個人のリスクや因果関係を示すものではありません。',
       cite: '出典：Koda M, Harada N, Nomura S, Tsugawa Y. Association of municipal rurality and area deprivation with cause-specific mortality in Japan: a nationwide ecological study. BMJ Public Health 2026;4:e004913. <a href="https://doi.org/10.1136/bmjph-2026-004913">doi:10.1136/bmjph-2026-004913</a>',
       notFound: '見つかりませんでした',
@@ -35,7 +35,7 @@
         rij: 'The part of the SMR not explained by a log-linear relationship with rurality (RIJ). Above 1 means more deaths than rurality alone would predict.',
         bym2: 'Municipal effect left after the main BYM2 spatial model including RIJ and ADI. Above 1 means more deaths than the model predicts.',
       },
-      fig: 'Figure S', na: 'No data', below: 'below', above: 'or above', zoom: 'Scroll or pinch to zoom, drag to pan, double-click to reset.',
+      fig: 'Figure S', na: 'No data', below: 'below', above: 'or above', toLight: 'Light', toDark: 'Dark', themeAria: (d) => d ? 'Switch to light theme' : 'Switch to dark theme', zoom: 'Scroll or pinch to zoom, drag to pan, double-click to reset.',
       note: 'Values are shown as 12 colour classes over the same range as the supplemental figures; exact values are not published. Colour limits, as in the figures, are the 3rd–97th (SMR) or 4th–96th (residuals) percentiles pooled across all causes and sexes. Hokkaido and Okinawa are shifted. This is a municipality-level ecological study and does not show individual risk or causation.',
       cite: 'Source: Koda M, Harada N, Nomura S, Tsugawa Y. Association of municipal rurality and area deprivation with cause-specific mortality in Japan: a nationwide ecological study. BMJ Public Health 2026;4:e004913. <a href="https://doi.org/10.1136/bmjph-2026-004913">doi:10.1136/bmjph-2026-004913</a>',
       notFound: 'Not found',
@@ -121,6 +121,13 @@
   function buildControls() {
     $('lang').onclick = () => { state.lang = state.lang === 'ja' ? 'en' : 'ja'; try { localStorage.setItem('lang', state.lang); } catch (e) {} render(); };
     $('cause').onchange = (e) => { state.cause = e.target.value; render(); };
+    $('theme').onclick = () => {
+      const next = isDark() ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      drawTheme();
+    };
+    try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawTheme); } catch (e) {}
     const step = (dir) => { const i = meta.causes.findIndex((c) => c.code_se === state.cause); state.cause = meta.causes[(i + dir + meta.causes.length) % meta.causes.length].code_se; render(); };
     $('prev').onclick = () => step(-1); $('next').onclick = () => step(1);
     $('search').onchange = (e) => {
@@ -143,6 +150,17 @@
     gMap.selectAll('path.muni').classed('is-hl', (d) => !!f && d.properties.code5 === state.hl);
   }
 
+  function isDark() {
+    const th = document.documentElement.dataset.theme;
+    if (th === 'light' || th === 'dark') return th === 'dark';
+    return matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function drawTheme() {
+    const L = t(), d = isDark();
+    $('theme').textContent = d ? `☀ ${L.toLight}` : `☾ ${L.toDark}`;
+    $('theme').setAttribute('aria-label', L.themeAria(d));
+  }
+
   function seg(el, items, key) {
     el.innerHTML = '';
     Object.entries(items).forEach(([k, label]) => {
@@ -159,6 +177,7 @@
     document.title = L.title;
     document.querySelectorAll('[data-t]').forEach((el) => { const v = L[el.dataset.t]; if (typeof v === 'string') { if (el.dataset.t === 'cite') el.innerHTML = v; else el.textContent = v; } });
     $('lang').textContent = state.lang === 'ja' ? 'EN' : '日本語';
+    drawTheme();
     $('cause').innerHTML = meta.causes.map((c, i) => `<option value="${c.code_se}"${c.code_se === state.cause ? ' selected' : ''}>${L.fig}${i + 1}. ${causeName(c.code_se)}</option>`).join('');
     seg($('sex'), L.sexes, 'sex');
     seg($('metric'), L.metrics, 'metric');
