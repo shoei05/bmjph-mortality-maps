@@ -32,9 +32,11 @@ select, input { font: inherit; font-size: .95rem; color: var(--ink); background:
 .mapwrap h2 { font-size: 1.05rem; margin: 0 0 6px; }
 .map svg { width: 100%; height: auto; max-height: calc(100vh - 190px); min-height: 320px; display: block; background: var(--sea); border-radius: 6px; touch-action: none; }
 .map .muni { stroke: none; }
-.map .pref { fill: none; stroke: var(--border); stroke-width: .5; pointer-events: none; }
-.map .hl { fill: none; stroke: var(--ink); stroke-width: 1.6; pointer-events: none; }
-.map .sep { stroke: var(--muted); stroke-width: .8; fill: none; }
+.map .pref { fill: none; stroke: var(--border); stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: none; }
+.map .hl { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+.map svg.has-hl path.muni:not(.is-hl) { fill-opacity: .3; }
+.map svg.has-hl .pref { stroke-opacity: .6; }
+.map .sep { stroke: var(--muted); stroke-width: 1; fill: none; vector-effect: non-scaling-stroke; }
 .tip { position: absolute; pointer-events: none; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: .85rem; box-shadow: 0 2px 8px rgba(0,0,0,.15); max-width: 260px; }
 .tip b { display: block; }
 .legend { margin-top: 10px; font-size: .8rem; color: var(--muted); }

@@ -21,7 +21,7 @@
         bym2: '論文の主モデル（へき地度とADIを入れたBYM2空間モデル）で説明しきれなかった市区町村ごとの効果です。1より大きいと、モデルの見込みより死亡が多い地域です。',
       },
       fig: 'S', na: 'データなし', below: '未満', above: '以上', zoom: 'ホイールやピンチで拡大、ドラッグで移動、ダブルクリックで戻ります。',
-      note: '値は補足図と同じ色の範囲を12段階に区切った区分で示しています（正確な数値は載せていません）。色の範囲は補足図と同じく、すべての死因と性別をまとめた分布の3〜97%（標準化死亡比）または4〜96%（残差）です。北海道と沖縄県は位置をずらして表示しています。市区町村単位の生態学的研究で、個人のリスクや因果関係を示すものではありません。境界は国土数値情報（行政区域データ、2021年1月1日時点、国土交通省）を smartnews-smri/japan-topography が簡略化したものを加工して使っています。',
+      note: '値は補足図と同じ色の範囲を12段階に区切った区分で示しています（正確な数値は載せていません）。色の範囲は補足図と同じく、すべての死因と性別をまとめた分布の3〜97%（標準化死亡比）または4〜96%（残差）です。北海道と沖縄県は位置をずらして表示しています。市区町村単位の生態学的研究で、個人のリスクや因果関係を示すものではありません。',
       cite: '出典：Koda M, Harada N, Nomura S, Tsugawa Y. Association of municipal rurality and area deprivation with cause-specific mortality in Japan: a nationwide ecological study. BMJ Public Health 2026;4:e004913. <a href="https://doi.org/10.1136/bmjph-2026-004913">doi:10.1136/bmjph-2026-004913</a>',
       notFound: '見つかりませんでした',
     },
@@ -36,7 +36,7 @@
         bym2: 'Municipal effect left after the main BYM2 spatial model including RIJ and ADI. Above 1 means more deaths than the model predicts.',
       },
       fig: 'Figure S', na: 'No data', below: 'below', above: 'or above', zoom: 'Scroll or pinch to zoom, drag to pan, double-click to reset.',
-      note: 'Values are shown as 12 colour classes over the same range as the supplemental figures; exact values are not published. Colour limits, as in the figures, are the 3rd–97th (SMR) or 4th–96th (residuals) percentiles pooled across all causes and sexes. Hokkaido and Okinawa are shifted. This is a municipality-level ecological study and does not show individual risk or causation. Boundaries: MLIT National Land Numerical Information (administrative areas, 1 January 2021), as simplified by smartnews-smri/japan-topography, processed by the author.',
+      note: 'Values are shown as 12 colour classes over the same range as the supplemental figures; exact values are not published. Colour limits, as in the figures, are the 3rd–97th (SMR) or 4th–96th (residuals) percentiles pooled across all causes and sexes. Hokkaido and Okinawa are shifted. This is a municipality-level ecological study and does not show individual risk or causation.',
       cite: 'Source: Koda M, Harada N, Nomura S, Tsugawa Y. Association of municipal rurality and area deprivation with cause-specific mortality in Japan: a nationwide ecological study. BMJ Public Health 2026;4:e004913. <a href="https://doi.org/10.1136/bmjph-2026-004913">doi:10.1136/bmjph-2026-004913</a>',
       notFound: 'Not found',
     },
@@ -78,25 +78,23 @@
   function buildMap() {
     const W = 760, H = 760;
     const box = { type: 'MultiPoint', coordinates: [[127.7, 26.8], [142.9, 42.0], [127.7, 42.0], [142.9, 26.8]] };
-    const proj = d3.geoMercator().fitSize([W, H], box).clipExtent([[0, 0], [W, H]]);
+    const proj = d3.geoMercator().fitSize([W, H], box);
     pathGen = d3.geoPath(proj);
     svg = d3.select('#map').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img');
     gMap = svg.append('g');
     gMap.selectAll('path.muni').data(features).join('path').attr('class', 'muni').attr('d', pathGen)
       .on('pointermove', onMove).on('pointerleave', () => { $('tip').hidden = true; })
-      .on('click', (ev, d) => { state.hl = d.properties.code5; drawHl(); onMove(ev, d); });
+      .on('click', (ev, d) => { state.hl = state.hl === d.properties.code5 ? null : d.properties.code5; drawHl(); onMove(ev, d); });
     gMap.append('path').attr('class', 'pref').attr('d', pathGen(topojson.mesh(topo, topo.objects.pref, (a, b) => a !== b)));
     const line = (pts) => pathGen({ type: 'LineString', coordinates: pts });
     gMap.append('path').attr('class', 'sep').attr('d', line([[129, 37], [135, 37], [139, 41.5]]));
     gMap.append('path').attr('class', 'sep').attr('d', line([[132, 27], [135, 31.5], [142, 31.5]]));
     gMap.append('path').attr('class', 'hl');
-    zoom = d3.zoom().scaleExtent([1, 12]).translateExtent([[0, 0], [W, H]])
+    zoom = d3.zoom().scaleExtent([1, 40]).translateExtent([[0, 0], [W, H]])
       .on('zoom', (ev) => {
         gMap.attr('transform', ev.transform);
-        gMap.selectAll('.pref,.sep').attr('stroke-width', 0.6 / ev.transform.k);
-        gMap.select('.hl').attr('stroke-width', 1.8 / ev.transform.k);
       });
-    svg.call(zoom).on('dblclick.zoom', null).on('dblclick', () => svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity));
+    svg.call(zoom).on('dblclick.zoom', null).on('dblclick', () => { state.hl = null; drawHl(); svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity); });
   }
 
   function classLabel(k) {
@@ -126,13 +124,13 @@
     const step = (dir) => { const i = meta.causes.findIndex((c) => c.code_se === state.cause); state.cause = meta.causes[(i + dir + meta.causes.length) % meta.causes.length].code_se; render(); };
     $('prev').onclick = () => step(-1); $('next').onclick = () => step(1);
     $('search').onchange = (e) => {
-      const q = e.target.value.trim(); if (!q) return;
+      const q = e.target.value.trim(); if (!q) { state.hl = null; drawHl(); return; }
       const f = features.find((x) => `${x.properties.pref} ${x.properties.city}` === q) || features.find((x) => x.properties.city === q || `${x.properties.pref}${x.properties.city}`.includes(q.replace(/\s/g, '')));
       if (!f) { e.target.setCustomValidity(t().notFound); e.target.reportValidity(); return; }
       e.target.setCustomValidity('');
       state.hl = f.properties.code5; drawHl();
       const [[x0, y0], [x1, y1]] = pathGen.bounds(f), W = 760, H = 760;
-      const k = Math.min(8, 0.4 / Math.max((x1 - x0) / W, (y1 - y0) / H));
+      const k = Math.min(30, 0.25 / Math.max((x1 - x0) / W, (y1 - y0) / H));
       svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity.translate(W / 2, H / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2));
     };
     $('munis').innerHTML = features.map((f) => `<option value="${f.properties.pref} ${f.properties.city}">`).join('');
@@ -141,6 +139,8 @@
   function drawHl() {
     const f = features.find((x) => x.properties.code5 === state.hl);
     gMap.select('.hl').attr('d', f ? pathGen(f) : null);
+    svg.classed('has-hl', !!f);
+    gMap.selectAll('path.muni').classed('is-hl', (d) => !!f && d.properties.code5 === state.hl);
   }
 
   function seg(el, items, key) {
